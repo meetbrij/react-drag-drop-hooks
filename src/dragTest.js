@@ -35,7 +35,8 @@ function DragTest() {
   const order = useRef(items.map((_, index) => index));
 
   const [state, setState] = useState({
-    isDragging: false
+    isDragging: false,
+    isSwiping: false
   });
 
   const setItemsState = () => {
@@ -52,7 +53,7 @@ function DragTest() {
     return { 
       zIndex: transformItem.zIndex,
       transform: `translate3D(${transformItem.x}px, ${transformItem.y}px, 0px)`,
-      // transition: state.isDragging ? 'none' : 'transform 500ms',
+      transition: state.isDragging ? 'none' : 'transform 500ms',
       // transition: 'transform 500ms',
     }
   }
@@ -62,19 +63,23 @@ function DragTest() {
     setDraggingMode = true;
   }
 
+  const onSwipeEnd = () => {
+    console.log("reset swipe or call service");
+  }
+
   const swapOrder = (orderArr, curIndex, curRow) => {
     orderArr.splice(curRow, 0, orderArr.splice(curIndex, 1)[0]);
     return orderArr;
   }
 
   // Set the drag hook and define component movement based on gesture data
-  const bind = useDrag(({ down, movement: [mx, my], args, direction, distance, delta, first, last}) => {
+  const bindDraggingEvent = useDrag(({ down, movement: [mx, my], args, direction, distance, delta, first, last}) => {
     // console.log("down:", down);
     // console.log("args:", args);
     // console.log("direction:", direction);
     // console.log("distance:", distance);
-    // console.log("movement:", mx, my);
-    // console.log("movement delta:", delta);
+    console.log("drag movement:", mx, my);
+    console.log("drag movement delta:", delta);
 
     if(first) {
       setState(state => ({
@@ -112,14 +117,58 @@ function DragTest() {
   },
   { filterTaps: true });
 
+  // Set the drag hook and define component movement based on gesture data
+  const bindSwipingEvent = useDrag(({ down, movement: [mx, my], args, direction, distance, delta, first, last}) => {
+    // console.log("down:", down);
+    // console.log("args:", args);
+    // console.log("direction:", direction);
+    // console.log("distance:", distance);
+    console.log("swipe movement:", mx, my);
+    console.log("swipe movement delta:", delta);
+
+    if(first) {
+      // draggingMode = 'x';
+      setState(state => ({
+        ...state,
+        isSwiping: true
+      }));
+    }
+    
+    // if((mx != 0 || my != 0) && setDraggingMode) {
+    //   draggingMode = (my > 0 || my < 0) ? 'y' : 'x';
+    //   setDraggingMode = false;
+    //   console.log("draggingMode:", draggingMode);
+    // }
+    
+    // let xPos = down ? mx : (mx > -30) ? 0 : -50;
+    // setItemTransormState(items.map((item, index) => {
+    //   return createTransformState(order.current, index, args[0], down, xPos, my);
+    // }));
+
+    if(last) {
+      setState(state => ({
+        ...state,
+        isSwiping: false
+      }));
+      onSwipeEnd();
+    }
+    
+  },
+  { filterTaps: true });
+
 
   return(
     <section>
         {itemTransformState && items.map( (item, index) => {
           let transformItem = itemTransformState[index];
           return(
-            <div className="draggable-item" key={index} {...bind(index)} style={getTransformPosition(transformItem)}>
-              <div>{item.number} {'  '} {item.title}</div>
+            <div className="draggable-item" key={index} {...bindDraggingEvent(index, 'y')} style={getTransformPosition(transformItem)}>
+              <div className="swipeable-item" {...bindSwipingEvent(index, 'x')}>
+                <div className="delete-icon">
+                  <span>Delete</span>
+                </div>
+                <div className="content">{item.number} {'  '} {item.title}</div>
+              </div>
             </div>
           )
         })}

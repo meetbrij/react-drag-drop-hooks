@@ -36,15 +36,32 @@ section .draggable-item {
   -ms-user-select: none;      /* IE 10+ */
   user-select: none;          /* Likely future */    
 }
-section .draggable-item div {
-  margin-right: 1em;
-  margin-left: 0.5em;
+
+section .draggable-item .swipeable-item {
+  position: relative;  
   font-weight: bold;
-  padding: 10px;
-  text-align: left;
+  text-align: left;  
 }
+
+section .draggable-item .swipeable-item .delete-icon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 10px;
+  background-color: #429c7a;
+}
+
+section .draggable-item .swipeable-item .content {
+  background-color: #bac2f8;
+  padding: 10px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0
+}
+
 section .draggable-item:hover {
-  background: linear-gradient(to left, #687bf7, #72d9ef);
+  background: #687bf7;
   color: white;
 }
 section .draggable-item.dropArea {
