@@ -12,6 +12,7 @@ const items = [
 
 let draggingMode = 'x';
 let setDraggingMode = true;
+let setSwipingMode = true;
 const POSITION = {x:0, y:0};
 
 const createTransformState = (newOrder, index, currIndex, down, xPos, yPos, order) => {
@@ -75,6 +76,7 @@ function DragTest() {
 
   const onSwipeEnd = () => {
     console.log("reset swipe or call service");
+    setSwipingMode = true;
   }
 
   const swapOrder = (orderArr, curIndex, curRow) => {
@@ -91,6 +93,7 @@ function DragTest() {
     console.log("drag movement:", mx, my);
     console.log("drag movement delta:", delta);
     console.log("setDraggingMode:", setDraggingMode);
+    console.log("setSwipingMode:", setSwipingMode);
 
     if(first) {
       setState(state => ({
@@ -99,10 +102,11 @@ function DragTest() {
       }));
     }
     
-    if((mx != 0 || my != 0) && setDraggingMode) {
+    if((mx != 0 || my != 0) && setDraggingMode && setSwipingMode) {
       console.log("inside set dragging mode");
       draggingMode = (my > 0 || my < 0) ? 'y' : 'x';
       setDraggingMode = false;
+      setSwipingMode = false;
       console.log("draggingMode:", draggingMode);
     }
 
@@ -120,13 +124,16 @@ function DragTest() {
       }));
 
       if(last) {
-        setState(state => ({
-          ...state,
-          isDragging: false
-        }));
         order.current = newOrder;
-        onDragEnd();
       }
+    }
+
+    if(last) {
+      setState(state => ({
+        ...state,
+        isDragging: false
+      }));
+      onDragEnd();
     }
     
   },
@@ -162,7 +169,7 @@ function DragTest() {
           isSwiping: false,
           isDragging: false
         }));
-        onDragEnd();
+        onSwipeEnd();
       }
     }
   },
