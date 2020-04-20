@@ -15,10 +15,10 @@ let setDraggingMode = true;
 const POSITION = {x:0, y:0};
 
 const createTransformState = (newOrder, index, currIndex, down, xPos, yPos, order) => {
-  console.log(newOrder, index, currIndex, order);
+  // console.log(newOrder, index, currIndex, order);
   let newOrderIdx = newOrder.indexOf(index);
   let orderIdx = order && order.indexOf(index);
-  console.log(newOrderIdx, orderIdx);
+  // console.log(newOrderIdx, orderIdx);
 
   if(draggingMode === 'x') {
     return index === currIndex && xPos < 0
@@ -48,11 +48,21 @@ function DragTest() {
   const [itemTransformState, setItemTransormState] = useState(()=> setItemsState());
   // console.log("itemTransformState:", itemTransformState);
 
-  const getTransformPosition = (transformItem) => {
+  const getTransformPositionX = (transformItem) => {
     // console.log("transform item:", transformItem);
     return { 
       zIndex: transformItem.zIndex,
-      transform: `translate3D(${transformItem.x}px, ${transformItem.y}px, 0px)`,
+      transform: `translate3D(${transformItem.x}px, 0px, 0px)`,
+      transition: state.isDragging ? 'none' : 'transform 500ms',
+      // transition: 'transform 500ms',
+    }
+  }
+
+  const getTransformPositionY = (transformItem) => {
+    // console.log("transform item:", transformItem);
+    return { 
+      zIndex: transformItem.zIndex,
+      transform: `translate3D(0px, ${transformItem.y}px, 0px)`,
       transition: state.isDragging ? 'none' : 'transform 500ms',
       // transition: 'transform 500ms',
     }
@@ -80,6 +90,7 @@ function DragTest() {
     // console.log("distance:", distance);
     console.log("drag movement:", mx, my);
     console.log("drag movement delta:", delta);
+    console.log("setDraggingMode:", setDraggingMode);
 
     if(first) {
       setState(state => ({
@@ -89,29 +100,33 @@ function DragTest() {
     }
     
     if((mx != 0 || my != 0) && setDraggingMode) {
+      console.log("inside set dragging mode");
       draggingMode = (my > 0 || my < 0) ? 'y' : 'x';
       setDraggingMode = false;
       console.log("draggingMode:", draggingMode);
     }
 
-    const curIndex = order.current.indexOf(args[0]);
-    const curRow = clamp(Math.round((curIndex * 50 + my) / 50), 0, items.length - 1);
-    // console.log(curIndex, curRow);
-    const newOrder = swapOrder([...order.current], curIndex, curRow);
-    // console.log(order.current, newOrder);
-    
-    let xPos = down ? mx : (mx > -30) ? 0 : -50;
-    setItemTransormState(items.map((item, index) => {
-      return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
-    }));
-
-    if(last) {
-      setState(state => ({
-        ...state,
-        isDragging: false
+    if(draggingMode == 'y') {
+      console.log("dragging direction y");
+      const curIndex = order.current.indexOf(args[0]);
+      const curRow = clamp(Math.round((curIndex * 50 + my) / 50), 0, items.length - 1);
+      // console.log(curIndex, curRow);
+      const newOrder = swapOrder([...order.current], curIndex, curRow);
+      // console.log(order.current, newOrder);
+      
+      let xPos = down ? mx : (mx > -30) ? 0 : -50;
+      setItemTransormState(items.map((item, index) => {
+        return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
       }));
-      order.current = newOrder;
-      onDragEnd();
+
+      if(last) {
+        setState(state => ({
+          ...state,
+          isDragging: false
+        }));
+        order.current = newOrder;
+        onDragEnd();
+      }
     }
     
   },
@@ -130,29 +145,26 @@ function DragTest() {
       // draggingMode = 'x';
       setState(state => ({
         ...state,
-        isSwiping: true
+        isSwiping: true,
       }));
     }
     
-    // if((mx != 0 || my != 0) && setDraggingMode) {
-    //   draggingMode = (my > 0 || my < 0) ? 'y' : 'x';
-    //   setDraggingMode = false;
-    //   console.log("draggingMode:", draggingMode);
-    // }
-    
-    // let xPos = down ? mx : (mx > -30) ? 0 : -50;
-    // setItemTransormState(items.map((item, index) => {
-    //   return createTransformState(order.current, index, args[0], down, xPos, my);
-    // }));
+    if(draggingMode == 'x') {
+      console.log("dragging direction x");
+     let xPos = down ? mx : (mx > -30) ? 0 : -50;
+      setItemTransormState(items.map((item, index) => {
+        return createTransformState(order.current, index, args[0], down, xPos, my, order.current);
+      }));
 
-    if(last) {
-      setState(state => ({
-        ...state,
-        isSwiping: false
-      }));
-      onSwipeEnd();
+      if(last) {
+        setState(state => ({
+          ...state,
+          isSwiping: false,
+          isDragging: false
+        }));
+        onDragEnd();
+      }
     }
-    
   },
   { filterTaps: true });
 
@@ -162,12 +174,12 @@ function DragTest() {
         {itemTransformState && items.map( (item, index) => {
           let transformItem = itemTransformState[index];
           return(
-            <div className="draggable-item" key={index} {...bindDraggingEvent(index, 'y')} style={getTransformPosition(transformItem)}>
-              <div className="swipeable-item" {...bindSwipingEvent(index, 'x')}>
+            <div className="draggable-item" key={index} {...bindDraggingEvent(index, 'y')} style={getTransformPositionY(transformItem)}>
+              <div className="swipeable-item">
                 <div className="delete-icon">
                   <span>Delete</span>
                 </div>
-                <div className="content">{item.number} {'  '} {item.title}</div>
+                <div className="content" {...bindSwipingEvent(index, 'x')} style={getTransformPositionX(transformItem)}>{item.number} {'  '} {item.title}</div>
               </div>
             </div>
           )
