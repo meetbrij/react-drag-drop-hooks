@@ -9,6 +9,7 @@
     "lodash": "^4.17.15",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-long": "^1.1.9",
     "react-scripts": "3.4.1",
     "react-use-gesture": "^7.0.14",
     "semantic-ui-react": "^0.88.2",

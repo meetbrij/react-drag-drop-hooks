@@ -60,35 +60,16 @@ section .draggable-item .swipeable-item .content {
   left: 0
 }
 
+section .draggable-item.draggable .swipeable-item .content {
+  background-color: #68ab92;
+  box-shadow: black;
+}
+
 section .draggable-item:hover {
-  background: #687bf7;
-  color: white;
+  background-color: #68ab92;
+  /* color: white; */
 }
-section .draggable-item.dropArea {
-  color: white !important;
-  background: white !important;
-  position: relative;
-}
-section .draggable-item.dropArea::before {
-  content: "Drop Here";
-  color: #687bf7;
-  font-size: 0.5em;
-  text-transform: uppercase;
-  width: 100%;
-  height: 100%;
-  border: 2px dashed #687bf7;
-  border-radius: 3px;
-  position: absolute;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-section .draggable-item.dropArea span {
-  display: none;
-}
-section .draggable-item.dropArea p {
-  margin-left: 1em;
-}
+
 @keyframes fadeIn {
   0% {
     opacity: 0.2;
