@@ -34,7 +34,7 @@ section .draggable-item {
   -webkit-user-select: none;  /* Chrome all / Safari all */
   -moz-user-select: none;     /* Firefox all */
   -ms-user-select: none;      /* IE 10+ */
-  user-select: none;          /* Likely future */    
+  user-select: none;          /* Likely future */
 }
 
 section .draggable-item .swipeable-item {
@@ -47,22 +47,38 @@ section .draggable-item .swipeable-item .delete-icon {
   position: absolute;
   right: 0;
   top: 0;
-  padding: 10px;
+  padding: 15px;
   background-color: #429c7a;
 }
 
 section .draggable-item .swipeable-item .content {
   background-color: #bac2f8;
-  padding: 10px;
+  padding: 15px;
   position: absolute;
   top: 0;
   right: 0;
   left: 0
 }
 
+section .draggable-item {
+  touch-action: none; 
+}
+
+section .draggable-item.draggable {
+  touch-action: none; 
+}
+
+section .draggable-item.undraggable {
+  touch-action: none; 
+}
+
 section .draggable-item.draggable .swipeable-item .content {
   background-color: #68ab92;
   box-shadow: black;
+}
+
+section .draggable-item.undraggable {
+  opacity: .5;
 }
 
 section .draggable-item:hover {

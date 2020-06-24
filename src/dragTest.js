@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { useDrag, useGesture } from 'react-use-gesture';
 import {clamp} from 'lodash';
  
@@ -8,6 +8,20 @@ const items = [
   { number: "3", title: "South Korea"},
   { number: "4", title: "Canada"},
   { number: "5", title: "New Zealand"},
+  { number: "6", title: "Netherlands"},
+  { number: "7", title: "Germany"},
+  { number: "8", title: "Switzerland"},
+  { number: "9", title: "Ireland"},
+  { number: "10", title: "Turkey"},
+  { number: "11", title: "Dubai"},
+  { number: "12", title: "Japan"},
+  { number: "13", title: "Argentina"},
+  { number: "14", title: "Brazil"},
+  { number: "15", title: "Austria"},
+  { number: "16", title: "Denmark"},
+  { number: "17", title: "Sweden"},
+  { number: "18", title: "Ireland"},
+  { number: "19", title: "Norway"},
 ]
 
 let draggingMode = 'x';
@@ -15,22 +29,34 @@ let setDraggingMode = true;
 let setSwipingMode = true;
 let buttonPressTimer = {};
 let longPressed = false;
+let viewportHeight = window.innerHeight-20;
 const POSITION = {x:0, y:0};
+let draggableYPos;
+let previousItemIdx;
 
 const createTransformState = (newOrder, index, currIndex, down, xPos, yPos, order) => {
-  console.log(down, index, currIndex, draggingMode);
+  // console.log(down, index, currIndex, draggingMode);
   let newOrderIdx = newOrder.indexOf(index);
   let orderIdx = order && order.indexOf(index);
-  // console.log(newOrderIdx, orderIdx);
+  // console.log(index, newOrderIdx, orderIdx, currIndex);
+  // console.log("ypos", orderIdx * 50 + yPos);
 
   if(draggingMode === 'x') {
     return index === currIndex && xPos < 0
         ? { x: xPos, y: newOrderIdx * 50, scale: 1.1, zIndex: '100', shadow: 15 }
         : { x: 0, y: newOrderIdx * 50, scale: 1, zIndex: '0', shadow: 1}
-  } else {
-    return down && index === currIndex
-        ? { x: 0, y: orderIdx * 50 + yPos, zIndex: '100', shadow: 15, draggableCls: 'draggable' }
-        : { x: 0, y: newOrderIdx * 50, scale: 1, zIndex: '0', shadow: 1, draggableCls: '' }
+  } else if(draggingMode === 'y') {
+    // console.log(index, currIndex);
+    if(down && index === currIndex) {
+      console.log(yPos, " :ypos:", (orderIdx * 50 + yPos));
+      // console.log(index, newOrderIdx, orderIdx, currIndex);
+      previousItemIdx = newOrderIdx;
+      return { x: 0, y: orderIdx * 50 + yPos, zIndex: '100', shadow: 15, draggableCls: 'draggable' }
+    } else if (down && index !== currIndex) {
+      return { x: 0, y: newOrderIdx * 50, scale: 1, zIndex: '0', shadow: 1, draggableCls: 'undraggable' }
+    } else {
+      return { x: 0, y: newOrderIdx * 50, scale: 1, zIndex: '0', shadow: 1, draggableCls: '' }
+    }
   }
 }
     
@@ -50,6 +76,18 @@ function DragTest() {
 
   const [itemTransformState, setItemTransormState] = useState(()=> setItemsState());
   // console.log("itemTransformState:", itemTransformState);
+
+  // useEffect(() => {
+  //     if(draggableYPos < 20) {
+  //       console.log("scroll window up");
+  //       window.scrollTo(0, window.pageYOffset - 3);
+  //     } else if(draggableYPos > viewportHeight) {
+  //       console.log("scroll window down");
+  //       window.scrollTo(0, window.pageYOffset + 3);
+  //     }
+  //   },
+  //   [itemTransformState]
+  // );
 
   const getTransformPositionX = (transformItem) => {
     // console.log("transform item:", transformItem);
@@ -94,23 +132,34 @@ function DragTest() {
       longPressed = true;
       setItemTransormState(items.map((item, index) => {
         draggingMode = 'y';
-        // console.log("clicked item:", order.current, item);
         return createTransformState(order.current, index, parseInt(currIdx), true);
       }));
     }, 1500);
   }
 
   const triggerTapEndEvent = (downState) => {
-    console.log("tap ended: ", downState);
+    // console.log("tap ended: ", downState);
     clearTimeout(buttonPressTimer);
   }
 
+  const triggerMouseMoveEvent = (downState) => {
+    console.log("<<<<<<<<<< mouse move: ", window.pageYOffset);
+    console.log("mouse move + : ", window.outerHeight + window.pageYOffset);
+    console.log("mouse move - : ", window.outerHeight - window.pageYOffset);
+  }
+
   // Set the drag hook and define component movement based on gesture data
-  const triggerDragEvent = ({ down, movement: [mx, my], args, direction, first, last, elapsedTime}) => {
+  const triggerDragEvent = ({ down, movement: [mx, my], args, first, last, xy, previous, delta, offset, vxvy, distance}) => {
     // console.log("down:", down);
-    // console.log("args:", args);
-    // console.log("direction:", direction);
-    // console.log("diff: " + Math.round(elapsedTime));
+    // console.log("args:", args);    
+    // console.log("previous: ", previous);
+    // console.log("xy: ", xy);
+    console.log("movement: ", my);
+    // console.log("delta: ", delta);
+    // console.log("offset: ", offset[1]);
+    // console.log("pageoffset: ", window.pageYOffset);
+    // console.log("vxvy: ", vxvy);
+    // console.log("distance: ", distance);
     // console.log("drag movement:", mx, my);
     // console.log("setDraggingMode:", setDraggingMode);
     // console.log("setSwipingMode:", setSwipingMode);
@@ -144,6 +193,25 @@ function DragTest() {
       setItemTransormState(items.map((item, index) => {
         return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
       }));
+
+      draggableYPos = xy[1];
+      if(draggableYPos < 20) {
+        console.log("scroll window up");
+        // document.getElementById("draggable-item-"+(previousItemIdx-1)).scrollIntoView({ block: "nearest", behavior: "smooth", inline: "nearest"});
+        // let target = document.getElementById("draggable-item-"+(previousItemIdx-1))
+        // target.parentNode.scrollTop = target.offsetTop; 
+        window.scrollTo(0, window.pageYOffset - 3);
+        // setItemTransormState(items.map((item, index) => {
+        //   return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
+        // }));
+      } else if(draggableYPos > viewportHeight) {
+        console.log("scroll window down");
+        // document.getElementById("draggable-item-"+(previousItemIdx+1)).scrollIntoView(false);
+        window.scrollTo(0, window.pageYOffset + 3);
+        // setItemTransormState(items.map((item, index) => {
+        //   return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
+        // }));
+      } 
 
       if(last) {
         order.current = newOrder;
@@ -200,7 +268,8 @@ function DragTest() {
     onDrag: (dragState) => triggerDragEvent(dragState),
     onTouchStart: (downState) => triggerTapStartEvent(downState),
     onTouchEnd: (downState) => triggerTapEndEvent(downState),
-    onContextMenu: (e) => e.preventDefault()
+    onContextMenu: (e) => e.preventDefault(),
+    onTouchMove: (moveState) => triggerMouseMoveEvent(moveState)
   })
 
 
@@ -209,10 +278,10 @@ function DragTest() {
         {itemTransformState && items.map( (item, index) => {
           let transformItem = itemTransformState[index];
           return(
-            <div className={"draggable-item " + transformItem.draggableCls } data-idx={index} key={index} {...bindDraggingEvent(index, 'y')} style={getTransformPositionY(transformItem)}>
+            <div id={"draggable-item-"+index}  className={"draggable-item " + transformItem.draggableCls } data-idx={index} key={index} {...bindDraggingEvent(index, 'y')} style={getTransformPositionY(transformItem)}>
               <div className="swipeable-item">
                 <div className="delete-icon">
-                  <span>Delete</span>
+                  <span>DEL</span>
                 </div>
                 <div className="content" {...bindSwipingEvent(index, 'x')} style={getTransformPositionX(transformItem)}>{item.number} {'  '} {item.title}</div>
               </div>
