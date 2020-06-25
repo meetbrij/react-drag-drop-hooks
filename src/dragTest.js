@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useRef} from 'react';
 import { useDrag, useGesture } from 'react-use-gesture';
 import {clamp} from 'lodash';
  
@@ -30,12 +30,12 @@ let setSwipingMode = true;
 let buttonPressTimer = {};
 let longPressed = false;
 let viewportHeight = window.innerHeight-20;
-const POSITION = {x:0, y:0};
 let draggableYPos;
 let initY;
-let startPageScroll = false;
+let scrollPageDirection = '';
 let scrollDiff = 0;
 let calcDiff = 0;
+let scrollContentHeight = document.documentElement.scrollHeight;
 // let previousItemIdx;
 
 const createTransformState = (newOrder, index, currIndex, down, xPos, yPos, order) => {
@@ -50,24 +50,25 @@ const createTransformState = (newOrder, index, currIndex, down, xPos, yPos, orde
         ? { x: xPos, y: newOrderIdx * 50, scale: 1.1, zIndex: '100', shadow: 15 }
         : { x: 0, y: newOrderIdx * 50, scale: 1, zIndex: '0', shadow: 1}
   } else if(draggingMode === 'y') {
-    // console.log(index, currIndex);
     if(down && index === currIndex) {
-      if(startPageScroll) {
-        scrollDiff = initY-(orderIdx * 50 + yPos) > scrollDiff ? initY-(orderIdx * 50 + yPos) : scrollDiff;
+      console.log("orderIdx: ", orderIdx, "initY: ", initY, "yPos", yPos);
+      if(scrollPageDirection == 'up') {
         calcDiff = scrollDiff - (initY-(orderIdx * 50 + yPos));
         let calcY = (orderIdx * 50 + yPos) - calcDiff;
-        console.log(yPos, " :ypos: ", (orderIdx * 50 + yPos), " - diff - ", initY-(orderIdx * 50 + yPos), " - calcY: ", calcY);
+        // console.log(" ^ ypos: ", (orderIdx * 50 + yPos), " - diff: ", initY-(orderIdx * 50 + yPos), " - calcDiff: ", calcDiff, " - calcY: ", calcY);
+        return { x: 0, y: calcY, zIndex: '100', shadow: 15, draggableCls: 'draggable' }
+      } else if(scrollPageDirection == 'down') {
+        calcDiff = scrollDiff - (initY-(orderIdx * 50 + yPos));
+        let calcY = (orderIdx * 50 + yPos) - calcDiff;
+        // console.log(" v ypos: ", (orderIdx * 50 + yPos), " - diff: ", initY-(orderIdx * 50 + yPos), " - calcDiff: ", calcDiff, " - calcY: ", calcY);
         return { x: 0, y: calcY, zIndex: '100', shadow: 15, draggableCls: 'draggable' }
       } else {
-        calcDiff = 0
-        let calcY = (orderIdx * 50 + yPos) - calcDiff;
-        console.log(yPos, " :ypos: ", (orderIdx * 50 + yPos), " - diff - ", initY-(orderIdx * 50 + yPos), " - calcY: ", calcY);
+        scrollDiff = initY-(orderIdx * 50 + yPos) > scrollDiff ? initY-(orderIdx * 50 + yPos) : scrollDiff;
+        calcDiff = 0;
+        let calcY = (orderIdx * 50 + yPos);
+        // console.log(" = ypos: ", (orderIdx * 50 + yPos), " - diff: ", initY-(orderIdx * 50 + yPos), " - calcDiff: ", calcDiff, " - calcY: ", calcY);
         return { x: 0, y: calcY, zIndex: '100', shadow: 15, draggableCls: 'draggable' }
       }
-      // console.log(yPos, " :ypos: ", (orderIdx * 50 + yPos), " - diff - ", initY-(orderIdx * 50 + yPos));
-      // console.log(index, newOrderIdx, orderIdx, currIndex);
-      // previousItemIdx = newOrderIdx;
-      // return { x: 0, y: orderIdx * 50 + yPos, zIndex: '100', shadow: 15, draggableCls: 'draggable' }
     } else if (down && index !== currIndex) {
       return { x: 0, y: newOrderIdx * 50, scale: 1, zIndex: '0', shadow: 1, draggableCls: 'undraggable' }
     } else {
@@ -117,6 +118,7 @@ function DragTest() {
     console.log("reset drag or call service");
     setDraggingMode = true;
     longPressed = false;
+    scrollPageDirection = '';
   }
 
   const onSwipeEnd = () => {
@@ -147,35 +149,26 @@ function DragTest() {
   }
 
   const triggerMouseMoveEvent = (downState) => {
-    console.log("<<<<<<<<<< page y offset: ", window.pageYOffset);
-    console.log("Y: ", downState.changedTouches[0].pageY);
+    // console.log("<<<<<<<<<< page y offset: ", window.pageYOffset);
+    // console.log("Y: ", downState.changedTouches[0].pageY);
     // console.log("window outerheight : ", window.outerHeight);
     // console.log("document scrollheight : ", document.documentElement.scrollHeight);
-    // console.log("document transform YPos : ", downState.changedTouches[0].clientX);
     // console.log("mouse move - : ", window.outerHeight - window.pageYOffset);
-
+    scrollContentHeight = document.documentElement.scrollHeight;
     initY = downState.changedTouches[0].pageY;
   }
 
   // Set the drag hook and define component movement based on gesture data
-  const triggerDragEvent = ({ down, movement: [mx, my], args, first, last, xy, initial, delta, offset, vxvy, distance}) => {
+  const triggerDragEvent = ({ down, movement: [mx, my], args, first, last, xy}) => {
     // console.log("down:", down);
-    // console.log("args:", args);    
-    // console.log("previous: ", previous);
-    console.log("y: ", xy[1], " - my: ", my);
-    console.log("initial y: ", initial[1]);
+    // console.log("args:", args);
+    // console.log("initial y: ", initial[1]);
     // console.log("offset: ", offset[1]);
-    // console.log("pageoffset: ", window.pageYOffset);
-    // console.log("vxvy: ", vxvy);
-    // console.log("distance: ", distance);
     // console.log("drag movement:", mx, my);
     // console.log("setDraggingMode:", setDraggingMode);
     // console.log("setSwipingMode:", setSwipingMode);
 
     clearTimeout(buttonPressTimer);
-
-    let mmy = xy[1] - initY;
-    // console.log("my: ", my, " - mmy: ", mmy);
 
     if(first) {
       setState(state => ({
@@ -184,7 +177,7 @@ function DragTest() {
       }));
     }
     
-    if((mx != 0 || my != 0) && setDraggingMode && setSwipingMode) {
+    if((mx !== 0 || my !== 0) && setDraggingMode && setSwipingMode) {
       // console.log("inside set dragging mode");
       draggingMode = (my > 0 || my < 0) ? 'y' : 'x';
       setDraggingMode = false;
@@ -192,7 +185,7 @@ function DragTest() {
       // console.log("draggingMode:", draggingMode);
     }
 
-    if(draggingMode == 'y' && longPressed) {
+    if(draggingMode === 'y' && longPressed) {
       // console.log("dragging direction y");
       const curIndex = order.current.indexOf(args[0]);
       const curRow = clamp(Math.round(((curIndex * 50 + my)-calcDiff) / 50), 0, items.length - 1);
@@ -201,35 +194,25 @@ function DragTest() {
       // console.log(order.current, newOrder);
       
       let xPos = down ? mx : (mx > -30) ? 0 : -50;
-      // setItemTransormState(items.map((item, index) => {
-      //   return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
-      // }));
+      setItemTransormState(items.map((item, index) => {
+        return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
+      }));
 
       draggableYPos = xy[1];
+      console.log(100, "initY: ", initY, scrollContentHeight);
       if(draggableYPos < 20) {
-        console.log("scroll window up");
-        // document.getElementById("draggable-item-"+(previousItemIdx-1)).scrollIntoView({ block: "nearest", behavior: "smooth", inline: "nearest"});
-        // let target = document.getElementById("draggable-item-"+(previousItemIdx-1))
-        // target.parentNode.scrollTop = target.offsetTop;
-        startPageScroll = true;
-        window.scrollTo(0, window.pageYOffset - 3);
-        setItemTransormState(items.map((item, index) => {
-          return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
-        }));
+        scrollPageDirection = 'up';
+        if(initY > 100 && initY < scrollContentHeight) {
+          console.log("scroll window up");
+          window.scrollTo(0, window.pageYOffset - 3);
+        }
       } else if(draggableYPos > viewportHeight) {
-        console.log("scroll window down");
-        // document.getElementById("draggable-item-"+(previousItemIdx+1)).scrollIntoView(false);
-        startPageScroll = true;
-        window.scrollTo(0, window.pageYOffset + 3);
-        setItemTransormState(items.map((item, index) => {
-          return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
-        }));
-      } else {
-        startPageScroll = false;
-        setItemTransormState(items.map((item, index) => {
-          return createTransformState(newOrder, index, args[0], down, xPos, my, order.current);
-        }));
-      }
+        scrollPageDirection = 'down';
+        if(initY > 100 && initY < scrollContentHeight) {
+          console.log("scroll window down");
+          window.scrollTo(0, window.pageYOffset + 3);
+        }
+      } 
 
       if(last) {
         order.current = newOrder;
@@ -263,7 +246,7 @@ function DragTest() {
       }));
     }
     
-    if(draggingMode == 'x') {
+    if(draggingMode === 'x') {
       // console.log("dragging direction x");
      let xPos = down ? mx : (mx > -30) ? 0 : -50;
       setItemTransormState(items.map((item, index) => {
