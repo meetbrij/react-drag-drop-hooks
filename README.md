@@ -24,4 +24,4 @@ I have added the feature where the user can swipe to right for revealing the del
  - long press to activate drag and drop 
  - scroll page while dragging items beyond viewport
 
- #### This is my row attempt to come up with a sample. If you find a better way please go ahead and contribute by creating a pull-request and fix any issues that you find. 
+ #### This is my naive attempt to come up with a sample. If you find a better way to code the above then please go ahead and contribute by creating a pull-request and fix any issues that you find. 
